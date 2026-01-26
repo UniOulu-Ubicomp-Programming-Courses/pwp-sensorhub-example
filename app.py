@@ -38,6 +38,24 @@ class Location(db.Model):
 
     sensor = db.relationship("Sensor", back_populates="location", uselist=False)
 
+    def serialize(self, short_form=False):
+        doc = {
+            "name": self.name
+        }
+        if not short_form:
+            doc["longitude"] = self.longitude
+            doc["latitude"] = self.latitude
+            doc["altitude"] = self.altitude
+            doc["description"] = self.description
+        return doc
+
+    def deserialize(self, doc):
+        self.name = doc["name"]
+        self.latitude = doc.get("latitude")
+        self.longitude = doc.get("longitude")
+        self.altitude = doc.get("altitude")
+        self.description = doc.get("description")
+
 
 class Deployment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,6 +76,18 @@ class Sensor(db.Model):
     measurements = db.relationship("Measurement", back_populates="sensor")
     deployments = db.relationship("Deployment", secondary=deployments, back_populates="sensors")
 
+    def serialize(self):
+        return {
+            "name": self.name,
+            "model": self.model,
+            "location": self.location and self.location.name
+        }
+
+    def deserialize(self, doc):
+        self.name = doc["name"]
+        self.model = doc["model"]
+
+
 
 class Measurement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,6 +96,12 @@ class Measurement(db.Model):
     time = db.Column(db.DateTime, nullable=False)
 
     sensor = db.relationship("Sensor", back_populates="measurements")
+
+    def serialize(self):
+        return {
+            "time": self.time.isoformat(),
+            "value": self.value
+        }
 
 
 class SensorConverter(BaseConverter):
@@ -110,7 +146,7 @@ class SensorCollection(Resource):
 class SensorItem(Resource):
 
     def get(self, sensor):
-        pass
+        return sensor.serialize()
 
     def put(self, sensor):
         pass
