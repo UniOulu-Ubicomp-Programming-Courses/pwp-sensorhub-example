@@ -87,6 +87,22 @@ class Sensor(db.Model):
         self.name = doc["name"]
         self.model = doc["model"]
 
+    @staticmethod
+    def json_schema():
+        schema = {
+            "type": "object",
+            "required": ["name", "model"]
+        }
+        props = schema["properties"] = {}
+        props["name"] = {
+            "description": "Sensor's unique name",
+            "type": "string"
+        }
+        props["model"] = {
+            "description": "Name of the sensor's model",
+            "type": "string"
+        }
+        return schema
 
 
 class Measurement(db.Model):
@@ -149,7 +165,27 @@ class SensorItem(Resource):
         return sensor.serialize()
 
     def put(self, sensor):
-        pass
+        if not request.json:
+            raise UnsupportedMediaType
+
+        try:
+            validate(request.json, Sensor.json_schema())
+        except ValidationError as e:
+            raise BadRequest(description=str(e))
+
+        sensor.deserialize(request.json)
+        try:
+            db.session.add(sensor)
+            db.session.commit()
+        except IntegrityError:
+            raise Conflict(
+                409,
+                description="Sensor with name '{name}' already exists.".format(
+                    **request.json
+                )
+            )
+
+        return Response(status=204)
 
     def delete(self, sensor):
         pass
