@@ -1,5 +1,8 @@
+from functools import wraps
+import hashlib
 import json
 import os
+import secrets
 from datetime import datetime
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
@@ -8,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
-from werkzeug.exceptions import BadRequest, Conflict, NotFound
+from werkzeug.exceptions import BadRequest, Conflict, Forbidden, NotFound
 from werkzeug.routing import BaseConverter
 
 app = Flask(__name__)
@@ -81,6 +84,7 @@ class Sensor(db.Model):
     location = db.relationship("Location", back_populates="sensor")
     measurements = db.relationship("Measurement", back_populates="sensor")
     deployments = db.relationship("Deployment", secondary=deployments, back_populates="sensors")
+    api_key = db.relationship("ApiKey", back_populates="sensor")
 
     def serialize(self):
         return {
@@ -135,6 +139,43 @@ class Measurement(db.Model):
         raise NotImplementedError
 
 
+class ApiKey(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(32), nullable=False, unique=True)
+    sensor_id = db.Column(db.Integer, db.ForeignKey("sensor.id"), nullable=True)
+    admin =  db.Column(db.Boolean, default=False)
+
+    sensor = db.relationship("Sensor", back_populates="api_key", uselist=False)
+
+    @staticmethod
+    def key_hash(key):
+        return hashlib.sha256(key.encode()).digest()
+
+
+def require_admin(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        key_hash = ApiKey.key_hash(request.headers.get("Sensorhub-Api-Key", "").strip())
+        db_key = ApiKey.query.filter_by(admin=True).first()
+        if secrets.compare_digest(key_hash, db_key.key):
+            return func(*args, **kwargs)
+        raise Forbidden
+    return wrapper
+
+def require_sensor_key(func):
+
+    @wraps(func)
+    def wrapper(self, sensor, *args, **kwargs):
+        key_hash = ApiKey.key_hash(request.headers.get("Sensorhub-Api-Key", "").strip())
+        db_key = ApiKey.query.filter_by(sensor=sensor).first()
+        if db_key is not None and secrets.compare_digest(key_hash, db_key.key):
+            return func(*args, **kwargs)
+        raise Forbidden
+    return wrapper
+
+
 class SensorConverter(BaseConverter):
 
     def to_python(self, sensor_name):
@@ -156,6 +197,7 @@ class SensorCollection(Resource):
             response_data.append([sensor.name, sensor.model])
         return response_data
 
+    @require_admin
     def post(self):
         if not request.json:
             abort(415)

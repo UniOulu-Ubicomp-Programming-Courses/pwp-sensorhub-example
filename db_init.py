@@ -2,6 +2,7 @@ import datetime
 import importlib
 import random
 import os
+import secrets
 flask_app = os.environ.get("FLASK_APP")
 app = importlib.import_module(flask_app)
 
@@ -35,5 +36,12 @@ with app.app.app_context():
 
         app.db.session.add(sensor)
 
-    app.db.session.commit()
+    token = secrets.token_urlsafe()
+    db_key = app.ApiKey(
+        key=app.ApiKey.key_hash(token),
+        admin=True
+    )
+    app.db.session.add(db_key)
 
+    app.db.session.commit()
+    print(token)
