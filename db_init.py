@@ -1,3 +1,4 @@
+import datetime
 import importlib
 import random
 import os
@@ -21,7 +22,18 @@ with app.app.app_context():
             model="test-sensor",
         )
         sensor.location = loc
+
+        now = datetime.datetime.now()
+        interval = datetime.timedelta(seconds=10)
+        for i in range(1000):
+            meas = app.Measurement(
+                value=round(random.random() * 100, 2),
+                time=now
+            )
+            now += interval
+            sensor.measurements.append(meas)
+
         app.db.session.add(sensor)
-        
+
     app.db.session.commit()
 

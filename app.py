@@ -1,19 +1,25 @@
 import json
+import os
 from datetime import datetime
-from flask import Flask, request
+from flask import Flask, Response, request
 from flask_restful import Api, Resource
+from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, Conflict, NotFound
 from werkzeug.routing import BaseConverter
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["CACHE_TYPE"] = "FileSystemCache"
+app.config["CACHE_DIR"] = os.path.join(app.instance_path, "cache")
+
 db = SQLAlchemy(app)
 api = Api(app)
+cache = Cache(app)
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -119,6 +125,15 @@ class Measurement(db.Model):
             "value": self.value
         }
 
+    def deserialize(self, doc):
+        # replace with your answer from exercise "POSTing it All Together"
+        raise NotImplementedError
+
+    @staticmethod
+    def json_schema():
+        # replace with your answer from exercise "POSTing it All Together"
+        raise NotImplementedError
+
 
 class SensorConverter(BaseConverter):
 
@@ -190,7 +205,49 @@ class SensorItem(Resource):
     def delete(self, sensor):
         pass
 
+
+
+def page_key(*args, **kwargs):
+    page = request.args.get("page", 0)
+    return request.path + f"[page_{page}]"
+
+
+class MeasurementCollection(Resource):
+
+    PAGE_SIZE = 50
+
+    @cache.cached(timeout=None, make_cache_key=page_key)
+    def get(self, sensor):
+        try:
+            page = int(request.args.get("page", 0))
+        except ValueError as e:
+            raise BadRequest(description=str(e))
+
+        remaining = Measurement.query.filter_by(
+            sensor=sensor
+        ).order_by("time").offset(page * self.PAGE_SIZE)
+        body = {
+            "sensor": sensor.name,
+            "measurements": []
+        }
+        for meas in remaining.limit(self.PAGE_SIZE):
+            body["measurements"].append(meas.serialize())
+        return body
+
+    def post(self, sensor):
+        # replace with your answer from exercise "POSTing it All Together"
+        raise NotImplementedError
+
+
+class MeasurementItem(Resource):
+
+    def delete(self, sensor, measurement):
+        pass
+
+
 app.url_map.converters["sensor"] = SensorConverter
 
 api.add_resource(SensorCollection, "/api/sensors/")
 api.add_resource(SensorItem, "/api/sensors/<sensor:sensor>/")
+api.add_resource(MeasurementCollection, "/api/sensors/<sensor:sensor>/measurements/")
+
