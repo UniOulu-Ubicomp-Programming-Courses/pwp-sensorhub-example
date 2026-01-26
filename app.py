@@ -11,6 +11,8 @@ from sqlalchemy import event
 from werkzeug.exceptions import BadRequest, Conflict, NotFound
 from werkzeug.routing import BaseConverter
 
+JSON = "application/json"
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -216,8 +218,9 @@ class MeasurementCollection(Resource):
 
     PAGE_SIZE = 50
 
-    @cache.cached(timeout=None, make_cache_key=page_key)
+    @cache.cached(timeout=None, make_cache_key=page_key, response_filter=lambda r: False)
     def get(self, sensor):
+        print("fresh")
         try:
             page = int(request.args.get("page", 0))
         except ValueError as e:
@@ -232,6 +235,10 @@ class MeasurementCollection(Resource):
         }
         for meas in remaining.limit(self.PAGE_SIZE):
             body["measurements"].append(meas.serialize())
+
+        response = Response(json.dumps(body), 200, mimetype=JSON)
+        if len(body["measurements"]) == self.PAGE_SIZE:
+            cache.set(page_key(), response, timeout=None)
         return body
 
     def post(self, sensor):
