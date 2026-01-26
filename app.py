@@ -6,6 +6,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
+from werkzeug.exceptions import NotFound
+from werkzeug.routing import BaseConverter
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
@@ -66,6 +68,18 @@ class Measurement(db.Model):
     sensor = db.relationship("Sensor", back_populates="measurements")
 
 
+class SensorConverter(BaseConverter):
+
+    def to_python(self, sensor_name):
+        db_sensor = Sensor.query.filter_by(name=sensor_name).first()
+        if db_sensor is None:
+            raise NotFound
+        return db_sensor
+
+    def to_url(self, db_sensor):
+        return db_sensor.name
+
+
 class SensorCollection(Resource):
 
     def get(self):
@@ -104,5 +118,7 @@ class SensorItem(Resource):
     def delete(self, sensor):
         pass
 
+app.url_map.converters["sensor"] = SensorConverter
+
 api.add_resource(SensorCollection, "/api/sensors/")
-api.add_resource(SensorItem, "/api/sensors/<sensor>/")
+api.add_resource(SensorItem, "/api/sensors/<sensor:sensor>/")
