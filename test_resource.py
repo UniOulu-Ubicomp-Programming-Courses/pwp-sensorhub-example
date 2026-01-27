@@ -117,6 +117,11 @@ class TestSensorCollection:
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 409
 
+    def test_unauthorized(self, client):
+        valid = _get_sensor_json()
+        resp = client.post(self.RESOURCE_URL, json=valid, headers={"sensorhub-api-key": "wrongkey"})
+        assert resp.status_code == 403
+
 
 class TestSensorItem:
 
@@ -157,6 +162,11 @@ class TestSensorItem:
         valid["name"] = "test-sensor-2"
         resp = client.put(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 409
+
+    def test_unauthorized(self, client):
+        valid = _get_sensor_json()
+        resp = client.put(self.RESOURCE_URL, json=valid, headers={"sensorhub-api-key": "wrongkey"})
+        assert resp.status_code == 403
 
 
 class TestMeasurementCollection:

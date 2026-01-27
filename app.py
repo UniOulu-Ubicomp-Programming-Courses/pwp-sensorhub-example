@@ -229,6 +229,7 @@ class SensorItem(Resource):
     def get(self, sensor):
         return sensor.serialize()
 
+    @require_admin
     def put(self, sensor):
         if not request.json:
             raise UnsupportedMediaType
