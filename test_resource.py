@@ -1,9 +1,11 @@
+import datetime
 import json
 import os
+import random
 import tempfile
 import pytest
 
-from app import Sensor, app, db
+from app import Measurement, Sensor, app, db
 
 
 
@@ -35,7 +37,19 @@ def _populate_db():
             name="test-sensor-{}".format(i),
             model="testsensor"
         )
+
+        now = datetime.datetime.now()
+        interval = datetime.timedelta(seconds=10)
+        for i in range(125):
+            meas = Measurement(
+                value=round(random.random() * 100, 2),
+                time=now
+            )
+            now += interval
+            s.measurements.append(meas)
+
         db.session.add(s)
+
     db.session.commit()
 
 def _get_sensor_json(number=1):
@@ -46,7 +60,7 @@ def _get_sensor_json(number=1):
     return {"name": "extra-sensor-{}".format(number), "model": "extrasensor"}
 
 
-class TestSensorCollection(object):
+class TestSensorCollection:
 
     RESOURCE_URL = "/api/sensors/"
 
@@ -82,7 +96,7 @@ class TestSensorCollection(object):
         assert resp.status_code == 409
 
 
-class TestSensorItem(object):
+class TestSensorItem:
 
     RESOURCE_URL = "/api/sensors/test-sensor-1/"
     INVALID_URL = "/api/test/sensors/non-sensor-x/"
@@ -121,3 +135,24 @@ class TestSensorItem(object):
         valid["name"] = "test-sensor-2"
         resp = client.put(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 409
+
+
+class TestMeasurementCollection:
+
+    RESOURCE_URL = "/api/sensors/test-sensor-1/measurements/"
+
+    def test_get(self, client):
+        resp_page_1 = client.get(self.RESOURCE_URL)
+        assert resp_page_1.status_code == 200
+        body = json.loads(resp_page_1.data)
+        assert "measurements" in body
+        assert len(body["measurements"]) == 50
+        p1_first = body["measurements"][0]
+        assert "value" in p1_first
+        assert "time" in p1_first
+        first_timestamp = datetime.datetime.fromisoformat(p1_first["time"])
+        resp_page_3 = client.get(self.RESOURCE_URL, query_string={"page": 2})
+        body = json.loads(resp_page_3.data)
+        assert len(body["measurements"]) == 25
+        second_timestamp = datetime.datetime.fromisoformat(body["measurements"][0]["time"])
+        assert second_timestamp == first_timestamp + datetime.timedelta(seconds=1000)
