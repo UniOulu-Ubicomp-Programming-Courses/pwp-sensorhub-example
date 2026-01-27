@@ -5,7 +5,7 @@ import random
 import tempfile
 import pytest
 
-from app import Measurement, Sensor, app, db
+from app import Measurement, Sensor, app, cache, db
 
 
 
@@ -23,6 +23,7 @@ def client():
 
     yield app.test_client()
 
+    cache.clear()
     db.session.rollback()
     db.drop_all()
     db.session.remove()
