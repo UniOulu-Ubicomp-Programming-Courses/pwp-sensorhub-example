@@ -139,7 +139,7 @@ class SensorCollection(Resource):
         response_data = []
         sensors = Sensor.query.all()
         for sensor in sensors:
-            response_data.append([sensor.name, sensor.model])
+            response_data.append(sensor.serialize())
         return response_data
 
     def post(self):
