@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 import pytest
 from werkzeug.datastructures import Headers
 
-from app import ApiKey, Measurement, Sensor, app, db
+from app import ApiKey, Measurement, Sensor, app, cache, db
 
 TEST_KEY = "verysafetestkey"
 
@@ -39,6 +39,7 @@ def client():
     app.test_client_class = AuthHeaderClient
     yield app.test_client()
 
+    cache.clear()
     db.session.rollback()
     db.drop_all()
     db.session.remove()
