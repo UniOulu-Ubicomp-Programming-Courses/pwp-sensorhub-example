@@ -100,3 +100,24 @@ class TestSensorItem(object):
         resp = client.get(self.INVALID_URL)
         assert resp.status_code == 404
 
+    def test_put_valid_request(self, client):
+        valid = _get_sensor_json()
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 204
+
+    def test_wrong_mediatype(self, client):
+        valid = _get_sensor_json()
+        resp = client.put(self.RESOURCE_URL, data=json.dumps(valid))
+        assert resp.status_code == 415
+
+    def test_put_missing_field(self, client):
+        valid = _get_sensor_json()
+        valid.pop("model")
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
+
+    def test_put_name_conflict(self, client):
+        valid = _get_sensor_json()
+        valid["name"] = "test-sensor-2"
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 409
