@@ -3,10 +3,25 @@ import json
 import os
 import random
 import tempfile
+from flask.testing import FlaskClient
 import pytest
+from werkzeug.datastructures import Headers
 
-from app import Measurement, Sensor, app, db
+from app import ApiKey, Measurement, Sensor, app, db
 
+TEST_KEY = "verysafetestkey"
+
+# https://stackoverflow.com/questions/16416001/set-http-headers-for-all-requests-in-a-flask-test
+class AuthHeaderClient(FlaskClient):
+
+    def open(self, *args, **kwargs):
+        headers = Headers({
+            'sensorhub-api-key': TEST_KEY
+        })
+        extra_headers = kwargs.pop('headers', Headers())
+        headers.extend(extra_headers)
+        kwargs['headers'] = headers
+        return super().open(*args, **kwargs)
 
 
 @pytest.fixture
@@ -21,6 +36,7 @@ def client():
     db.create_all()
     _populate_db()
 
+    app.test_client_class = AuthHeaderClient
     yield app.test_client()
 
     db.session.rollback()
@@ -50,6 +66,11 @@ def _populate_db():
 
         db.session.add(s)
 
+    db_key = ApiKey(
+        key=ApiKey.key_hash(TEST_KEY),
+        admin=True
+    )
+    db.session.add(db_key)
     db.session.commit()
 
 def _get_sensor_json(number=1):

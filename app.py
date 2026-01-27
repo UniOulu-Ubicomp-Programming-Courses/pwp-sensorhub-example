@@ -267,7 +267,6 @@ class MeasurementCollection(Resource):
 
     @cache.cached(timeout=None, make_cache_key=page_key, response_filter=lambda r: False)
     def get(self, sensor):
-        print("fresh")
         try:
             page = int(request.args.get("page", 0))
         except ValueError as e:
