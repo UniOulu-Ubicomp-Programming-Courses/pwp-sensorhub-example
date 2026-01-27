@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from flask import Flask, request
+from flask import Flask, abort, request
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
