@@ -5,10 +5,11 @@ from flask import Flask, Response, request
 from flask_restful import Api, Resource
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
+from jsonschema import ValidationError, validate
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
-from werkzeug.exceptions import BadRequest, Conflict, NotFound
+from werkzeug.exceptions import BadRequest, Conflict, NotFound, UnsupportedMediaType
 from werkzeug.routing import BaseConverter
 
 app = Flask(__name__)
@@ -153,26 +154,31 @@ class SensorCollection(Resource):
         response_data = []
         sensors = Sensor.query.all()
         for sensor in sensors:
-            response_data.append([sensor.name, sensor.model])
+            response_data.append(sensor.serialize())
         return response_data
 
     def post(self):
         if not request.json:
-            abort(415)
+            raise UnsupportedMediaType
 
         try:
-            sensor = Sensor(
-                name=request.json["name"],
-                model=request.json["model"],
-            )
+            validate(request.json, Sensor.json_schema())
+        except ValidationError as e:
+            raise BadRequest(description=str(e))
+
+        sensor = Sensor()
+        sensor.deserialize(request.json)
+        try:
             db.session.add(sensor)
             db.session.commit()
-        except KeyError:
-            abort(400)
         except IntegrityError:
-            abort(409)
+            raise Conflict(
+                description="Sensor with name '{name}' already exists.".format(
+                    **request.json
+                )
+            )
 
-        return "", 201
+        return Response(status=201)
 
 class SensorItem(Resource):
 
@@ -194,7 +200,6 @@ class SensorItem(Resource):
             db.session.commit()
         except IntegrityError:
             raise Conflict(
-                409,
                 description="Sensor with name '{name}' already exists.".format(
                     **request.json
                 )
