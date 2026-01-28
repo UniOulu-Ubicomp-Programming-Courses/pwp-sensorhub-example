@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from flask import Flask, abort, request
+from flask import Flask, Response, abort, request
 from flask_restful import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -105,7 +105,9 @@ class SensorCollection(Resource):
         except IntegrityError:
             abort(409)
 
-        return "", 201
+        return Response(status=201, headers={
+            "Location": api.url_for(SensorItem, sensor=sensor)
+        })
 
 class SensorItem(Resource):
 
