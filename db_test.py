@@ -1,6 +1,5 @@
 import os
 import pytest
-import tempfile
 import time
 from datetime import datetime
 from sqlalchemy.engine import Engine
