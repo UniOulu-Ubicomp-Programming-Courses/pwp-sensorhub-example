@@ -163,7 +163,10 @@ class SensorCollection(Resource):
                 )
             )
 
-        return Response(status=201)
+        return Response(status=201, headers={
+            "Location": api.url_for(SensorItem, sensor=sensor)
+        })
+
 
 class SensorItem(Resource):
 
