@@ -97,7 +97,7 @@ class TestSensorCollection:
 class TestSensorItem:
 
     RESOURCE_URL = "/api/sensors/test-sensor-1/"
-    INVALID_URL = "/api/test/sensors/non-sensor-x/"
+    INVALID_URL = "/api/sensors/non-sensor-x/"
 
     def test_get(self, client):
         resp = client.get(self.RESOURCE_URL)
@@ -105,6 +105,7 @@ class TestSensorItem:
         body = json.loads(resp.data)
         assert "name" in body
         assert "model" in body
+        assert "location" in body
         assert body["name"] == "test-sensor-1"
         assert body["model"] == "testsensor"
 
@@ -133,6 +134,12 @@ class TestSensorItem:
         valid["name"] = "test-sensor-2"
         resp = client.put(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 409
+
+    def test_delete(self, client):
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 204
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 404
 
 
 class TestMeasurementCollection:
