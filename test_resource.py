@@ -38,7 +38,7 @@ def _get_sensor_json(number=1):
     return {"name": "extra-sensor-{}".format(number), "model": "extrasensor"}
 
 
-class TestSensorCollection(object):
+class TestSensorCollection:
 
     RESOURCE_URL = "/api/sensors/"
 
@@ -80,10 +80,10 @@ class TestSensorCollection(object):
         assert resp.status_code == 409
 
 
-class TestSensorItem(object):
+class TestSensorItem:
 
     RESOURCE_URL = "/api/sensors/test-sensor-1/"
-    INVALID_URL = "/api/test/sensors/non-sensor-x/"
+    INVALID_URL = "/api/sensors/non-sensor-x/"
 
     def test_get(self, client):
         resp = client.get(self.RESOURCE_URL)
@@ -91,6 +91,7 @@ class TestSensorItem(object):
         body = json.loads(resp.data)
         assert "name" in body
         assert "model" in body
+        assert "location" in body
         assert body["name"] == "test-sensor-1"
         assert body["model"] == "testsensor"
 
@@ -119,3 +120,9 @@ class TestSensorItem(object):
         valid["name"] = "test-sensor-2"
         resp = client.put(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 409
+
+    def test_delete(self, client):
+        resp = client.delete(self.RESOURCE_URL)
+        assert resp.status_code == 204
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 404

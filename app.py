@@ -196,7 +196,11 @@ class SensorItem(Resource):
         return Response(status=204)
 
     def delete(self, sensor):
-        pass
+        db.session.delete(sensor)
+        db.session.commit()
+
+        return Response(status=204)
+
 
 app.url_map.converters["sensor"] = SensorConverter
 
