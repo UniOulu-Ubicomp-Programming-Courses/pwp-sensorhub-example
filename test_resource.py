@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import random
-import tempfile
 from flask.testing import FlaskClient
 import pytest
 from werkzeug.datastructures import Headers
@@ -26,10 +25,6 @@ class AuthHeaderClient(FlaskClient):
 
 @pytest.fixture
 def client():
-    db_fd, db_fname = tempfile.mkstemp()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_fname
-    app.config["TESTING"] = True
-
     ctx = app.app_context()
     ctx.push()
 
@@ -43,9 +38,6 @@ def client():
     db.session.rollback()
     db.drop_all()
     db.session.remove()
-    os.close(db_fd)
-    os.unlink(db_fname)
-
     ctx.pop()
 
 def _populate_db():
