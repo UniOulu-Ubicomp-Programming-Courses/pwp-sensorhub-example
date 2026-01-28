@@ -145,6 +145,7 @@ class SensorCollection(Resource):
             "Location": api.url_for(SensorItem, sensor=sensor)
         })
 
+
 class SensorItem(Resource):
 
     def get(self, sensor):
@@ -154,7 +155,11 @@ class SensorItem(Resource):
         pass
 
     def delete(self, sensor):
-        pass
+        db.session.delete(sensor)
+        db.session.commit()
+
+        return Response(status=204)
+
 
 app.url_map.converters["sensor"] = SensorConverter
 
