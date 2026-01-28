@@ -55,6 +55,9 @@ class TestSensorCollection(object):
         valid = _get_sensor_json()
         resp = client.post(self.RESOURCE_URL, json=valid)
         assert resp.status_code == 201
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + valid["name"] + "/")
+        resp = client.get(resp.headers["Location"])
+        assert resp.status_code == 200
 
     def test_wrong_mediatype(self, client):
         valid = _get_sensor_json()
