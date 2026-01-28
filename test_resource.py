@@ -1,6 +1,5 @@
 import json
 import os
-import tempfile
 import pytest
 
 from app import Sensor, app, db
@@ -9,10 +8,6 @@ from app import Sensor, app, db
 
 @pytest.fixture
 def client():
-    db_fd, db_fname = tempfile.mkstemp()
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_fname
-    app.config["TESTING"] = True
-
     ctx = app.app_context()
     ctx.push()
 
@@ -24,9 +19,6 @@ def client():
     db.session.rollback()
     db.drop_all()
     db.session.remove()
-    os.close(db_fd)
-    os.unlink(db_fname)
-
     ctx.pop()
 
 def _populate_db():
