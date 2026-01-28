@@ -1,6 +1,5 @@
 import os
 import pytest
-import tempfile
 import time
 from datetime import datetime
 from sqlalchemy.engine import Engine
@@ -20,10 +19,6 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 # we don't need a client for database testing, just the db handle
 @pytest.fixture
 def db_handle():
-    db_fd, db_fname = tempfile.mkstemp()
-    app.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_fname
-    app.app.config["TESTING"] = True
-    
     ctx = app.app.app_context()
     ctx.push()
     app.db.create_all()
@@ -34,8 +29,6 @@ def db_handle():
     app.db.drop_all()
     app.db.session.remove()
     ctx.pop()
-    os.close(db_fd)
-    os.unlink(db_fname)
 
 def _get_location(sitename="alpha"):
     return Location(
