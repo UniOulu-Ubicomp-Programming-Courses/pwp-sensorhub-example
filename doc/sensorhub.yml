@@ -1,0 +1,45 @@
+---
+openapi: 3.0.3
+servers:
+- url: /api
+components:
+  parameters:
+    sensor:
+      description: Selected sensor's unique name
+      in: path
+      name: sensor
+      required: true
+      schema:
+        type: string
+  schemas:
+    Sensor:
+      properties:
+        model:
+          description: Name of the sensor's model
+          type: string
+        name:
+          description: Sensor's unique name
+          type: string
+      required:
+      - name
+      - model
+      type: object
+  securitySchemes:
+    sensorhubKey:
+      type: apiKey
+      name: Sensorhub-Api-Key
+      in: header
+info:
+  title: Sensorhub Example
+  version: 0.0.1
+  description: |
+    This is an API example used in the Programmable Web Project course.
+    It stores data about sensors and where they have been deployed.
+  termsOfService: http://totally.not.placehold.er/
+  contact:
+    url: http://totally.not.placehold.er/
+    email: pwp-course@lists.oulu.fi
+    name: PWP Staff List
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html

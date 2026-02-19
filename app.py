@@ -200,6 +200,23 @@ class SensorConverter(BaseConverter):
 class SensorCollection(Resource):
 
     def get(self):
+        """
+        ---
+        description: Get the list of managed sensors
+        responses:
+          '200':
+            description: List of sensors with shortened location info
+            content:
+              application/json:
+                example:
+                - name: test-sensor-1
+                  model: uo-test-sensor
+                  location: test-site-a
+                - name: test-sensor-2
+                  model: uo-test-sensor
+                  location: null
+        """
+
         response_data = []
         sensors = Sensor.query.all()
         for sensor in sensors:
@@ -208,6 +225,34 @@ class SensorCollection(Resource):
 
     @require_admin
     def post(self):
+        """
+        ---
+        description: Create a new sensor
+        requestBody:
+          description: JSON document that contains basic data for a new sensor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+              example:
+                name: new-test-sensor-1
+                model: uo-test-sensor-plus
+        responses:
+          '201':
+            description: The sensor was created successfully
+            headers:
+              Location:
+              description: URI of the new sensor
+              schema:
+                type: string
+          '400':
+            description: The request body was not valid
+          '409':
+            description: A sensor with the same name already exists
+          '415':
+            description: Wrong media type was used
+        """
+
         if not request.json:
             raise UnsupportedMediaType
 
@@ -236,10 +281,69 @@ class SensorCollection(Resource):
 class SensorItem(Resource):
 
     def get(self, sensor):
+        """
+        ---
+        parameters:
+        - $ref: '#/components/parameters/sensor'
+        description: Get details of one sensor
+        responses:
+          '200':
+            description: Data of single sensor with extended location info
+            content:
+              application/json:
+                examples:
+                  deployed-sensor:
+                    description: A sensor that has been placed into a location
+                    value:
+                      name: test-sensor-1
+                      model: uo-test-sensor
+                      location:
+                      name: test-site-a
+                      latitude: 123.45
+                      longitude: 123.45
+                      altitude: 44.51
+                      description: in some random university hallway
+                  stored-sensor:
+                    description: A sensor that lies in the storage, currently unused
+                    value:
+                      name: test-sensor-2
+                      model: uo-test-sensor
+                      location: null
+          '404':
+            description: The sensor was not found
+        """
+
         return sensor.serialize()
 
     @require_admin
     def put(self, sensor):
+        """
+        ---
+        parameters:
+        - $ref: '#/components/parameters/sensor'
+        description: Replace sensor's basic data with new values
+        requestBody:
+          description: JSON document that contains new basic data for the sensor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor'
+              example:
+                name: new-test-sensor-1
+                model: uo-test-sensor-plus
+        responses:
+          '204':
+            description: The sensor's attributes were updated successfully
+          '400':
+            description: The request body was not valid
+          '404':
+            description: The sensor was not found
+          '409':
+            description: A sensor with the same name already exists
+          '415':
+            description: Wrong media type was used
+        """
+
         if not request.json:
             raise UnsupportedMediaType
 
@@ -262,6 +366,18 @@ class SensorItem(Resource):
         return Response(status=204)
 
     def delete(self, sensor):
+        """
+        ---
+        parameters:
+        - $ref: '#/components/parameters/sensor'
+        description: Delete the selected sensor
+        responses:
+          '204':
+            description: The sensor was successfully deleted
+          '404':
+            description: The sensor was not found
+        """
+
         db.session.delete(sensor)
         db.session.commit()
 
