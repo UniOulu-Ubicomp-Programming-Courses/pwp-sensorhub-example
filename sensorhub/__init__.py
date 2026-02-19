@@ -1,4 +1,5 @@
 import os
+from flasgger import Swagger
 from flask import Flask
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,12 @@ def create_app(test_config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         CACHE_TYPE="FileSystemCache",
         CACHE_DIR=os.path.join(app.instance_path, "cache"),
+        SWAGGER={
+            "title": "Sensorhub API",
+            "openapi": "3.0.4",
+            "uiversion": 3,
+            "doc_dir": "sensorhub/doc"
+        }
     )
 
     if test_config is None:
@@ -39,5 +46,6 @@ def create_app(test_config=None):
     app.cli.add_command(models.generate_master_key)
     app.url_map.converters["sensor"] = SensorConverter
     app.register_blueprint(api.api_bp)
+    swagger = Swagger(app, template_file="doc/base.yml")
 
     return app
