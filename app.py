@@ -397,6 +397,26 @@ class MeasurementCollection(Resource):
 
     @cache.cached(timeout=None, make_cache_key=page_key, response_filter=lambda r: False)
     def get(self, sensor):
+        """
+        ---
+        parameters:
+        - $ref: '#/components/parameters/sensor'
+        - $ref: '#/components/parameters/page'
+        description: Get details of one sensor
+        responses:
+          '200':
+            description: Single page with 50 measurements
+            content:
+              application/json:
+                example:
+                  sensor: test-sensor-1
+                  measurements:
+                  - time: 2026-02-19T12:07:55.054964
+                    value: 44.51
+                  - time: 2026-02-19T12:07:56.054964
+                    value: 44.53
+        """
+
         try:
             page = int(request.args.get("page", 0))
         except ValueError as e:
