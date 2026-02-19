@@ -11,6 +11,13 @@ components:
       required: true
       schema:
         type: string
+    page:
+      description: Page number for paginated measurements
+      in: query
+      name: page
+      required: true
+      schema:
+        type: integer
   schemas:
     Sensor:
       properties:
@@ -143,3 +150,21 @@ paths:
          description: The sensor was successfully deleted
        '404':
          description: The sensor was not found
+  /sensors/{sensor}/measurements:
+    parameters:
+    - $ref: '#/components/parameters/sensor'
+    - $ref: '#/components/parameters/page'
+    get:
+      description: Get details of one sensor
+      responses:
+        '200':
+          description: Single page with 50 measurements
+          content:
+            application/json:
+              example:
+                sensor: test-sensor-1
+                measurements:
+                - time: 2026-02-19T12:07:55.054964
+                  value: 44.51
+                - time: 2026-02-19T12:07:56.054964
+                  value: 44.53
