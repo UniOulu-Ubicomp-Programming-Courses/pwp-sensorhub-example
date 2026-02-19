@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 from datetime import datetime
+from flasgger import Swagger, swag_from
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
 from flask_caching import Cache
@@ -22,10 +23,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["CACHE_TYPE"] = "FileSystemCache"
 app.config["CACHE_DIR"] = os.path.join(app.instance_path, "cache")
-
+app.config["SWAGGER"] = {
+    "title": "Sensorhub API",
+    "openapi": "3.0.4",
+    "uiversion": 3,
+}
 db = SQLAlchemy(app)
 api = Api(app)
 cache = Cache(app)
+swagger = Swagger(app, template_file="doc/sensorhub.yml")
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
