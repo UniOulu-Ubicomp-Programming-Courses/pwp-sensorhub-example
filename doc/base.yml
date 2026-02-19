@@ -11,6 +11,13 @@ components:
       required: true
       schema:
         type: string
+    page:
+      description: Page number for paginated measurements
+      in: query
+      name: page
+      required: true
+      schema:
+        type: integer
   schemas:
     Sensor:
       properties:
