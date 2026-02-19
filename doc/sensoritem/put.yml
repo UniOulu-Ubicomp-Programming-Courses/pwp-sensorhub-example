@@ -1,0 +1,24 @@
+---
+parameters:
+- $ref: '#/components/parameters/sensor'
+description: Replace sensor's basic data with new values
+requestBody:
+  description: JSON document that contains new basic data for the sensor
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Sensor'
+      example:
+        name: new-test-sensor-1
+        model: uo-test-sensor-plus
+responses:
+  '204':
+    description: The sensor's attributes were updated successfully
+  '400':
+    description: The request body was not valid
+  '404':
+    description: The sensor was not found
+  '409':
+    description: A sensor with the same name already exists
+  '415':
+    description: Wrong media type was used
