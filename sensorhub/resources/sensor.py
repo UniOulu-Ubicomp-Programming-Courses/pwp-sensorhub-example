@@ -11,6 +11,7 @@ from sensorhub.utils import require_admin
 
 class SensorCollection(Resource):
 
+    @require_admin
     def get(self):
         response_data = []
         sensors = Sensor.query.all()
