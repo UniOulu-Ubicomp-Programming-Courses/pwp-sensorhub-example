@@ -1,0 +1,14 @@
+---
+description: Get the list of managed sensors
+responses:
+  '200':
+    description: List of sensors with shortened location info
+    content:
+      application/json:
+        example:
+        - name: test-sensor-1
+          model: uo-test-sensor
+          location: test-site-a
+        - name: test-sensor-2
+          model: uo-test-sensor
+          location: null

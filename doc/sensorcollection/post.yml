@@ -1,0 +1,26 @@
+---
+description: Create a new sensor
+requestBody:
+  description: JSON document that contains basic data for a new sensor
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Sensor'
+      example:
+        name: new-test-sensor-1
+        model: uo-test-sensor-plus
+      responses:
+        '201':
+          description: The sensor was created successfully
+          headers:
+            Location:
+            description: URI of the new sensor
+            schema:
+            type: string
+        '400':
+          description: The request body was not valid
+        '409':
+          description: A sensor with the same name already exists
+        '415':
+          description: Wrong media type was used
+
