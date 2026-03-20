@@ -1,4 +1,5 @@
 import os
+from flasgger import Swagger
 from flask import Flask
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +17,17 @@ def create_app(test_config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         CACHE_TYPE="FileSystemCache",
         CACHE_DIR=os.path.join(app.instance_path, "cache"),
+        SWAGGER = {
+            "title": "Sensorhub API",
+            "openapi": "3.0.4",
+            "uiversion": 3,
+            "doc_dir": "sensorhub/doc",
+        },
+        RABBITMQ_BROKER_ADDR="amqp://localhost/",
+        RABBIT_USE_TLS=False,
     )
+
+    swagger = Swagger(app, template_file="doc/base.yml")
 
     if test_config is None:
         app.config.from_pyfile("config.py", silent=True)

@@ -66,6 +66,7 @@ class Sensor(db.Model):
     measurements = db.relationship("Measurement", back_populates="sensor")
     deployments = db.relationship("Deployment", secondary=deployments, back_populates="sensors")
     api_key = db.relationship("ApiKey", back_populates="sensor")
+    stats = db.relationship("Stats", back_populates="sensor", uselist=False)
 
     def serialize(self):
         return {
@@ -118,6 +119,48 @@ class Measurement(db.Model):
     def json_schema():
         # replace with your answer from exercise "POSTing it All Together"
         raise NotImplementedError
+
+
+class Stats(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    generated = db.Column(db.DateTime, nullable=False)
+    mean = db.Column(db.Float, nullable=False)
+    sensor_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sensor.id"),
+        unique=True, nullable=False
+    )
+
+    sensor = db.relationship("Sensor", back_populates="stats")
+
+    def serialize(self):
+        return {
+            "generated": self.generated.isoformat(),
+            "mean": self.mean
+        }
+
+    def deserialize(self, doc):
+        self.generated = datetime.datetime.fromisoformat(doc["generated"])
+        self.mean = doc["mean"]
+
+    @staticmethod
+    def json_schema():
+        schema = {
+            "type": "object",
+            "required": ["generated", "mean"]
+        }
+        props = schema["properties"] = {}
+        props["generated"] = {
+            "description": "Generation timestamp",
+            "type": "string",
+            "format": "date-time"
+        }
+        props["mean"] = {
+            "description": "Mean value of data",
+            "type": "number"
+        }
+        return schema
 
 
 class ApiKey(db.Model):
