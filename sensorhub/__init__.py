@@ -23,8 +23,10 @@ def create_app(test_config=None):
             "uiversion": 3,
             "doc_dir": "sensorhub/doc",
         },
-        RABBITMQ_BROKER_ADDR="amqp://localhost/",
-        RABBIT_USE_TLS=False,
+        RABBITMQ_HOST="localhost",
+        RABBITMQ_PORT=5671,
+        RABBITMQ_VHOST="/",
+        RABBITMQ_USE_TLS=False,
     )
 
     swagger = Swagger(app, template_file="doc/base.yml")
